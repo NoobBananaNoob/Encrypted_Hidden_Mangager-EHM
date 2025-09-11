@@ -51,9 +51,11 @@
   <a href="#mainmenu">Main Menu</a> |
   <a href="#password">Password & Security</a> |
   <a href="#settings">Settings</a> |
-  <a href="#anime">Anime Vault</a> |
+  <a href="#anime">Vault</a> |
   <a href="#chromes">Chromes / Launchers</a> |
   <a href="#clicky">Clicky Clicker</a> |
+  <a href="#macros">Macros</a> |
+  <a href="#filerunner">File Runner</a> |
   <a href="#files">Config Files</a> |
   <a href="#troubleshoot">Troubleshooting</a> |
   <a href="#faq">FAQ</a>
@@ -84,7 +86,7 @@
         <strong>Quick links: </strong>
         <a class="link" onclick="navTo('overview')">Overview</a>
         <a class="link" onclick="navTo('settings')">Settings</a>
-        <a class="link" onclick="navTo('anime')">Anime Vault</a>
+        <a class="link" onclick="navTo('anime')">Vault</a>
       </div>
     </article>
 
@@ -108,7 +110,7 @@
     <p>This program is a terminal-style interface with the following features:</p>
     <ul>
       <li>Launch websites (custom & guest Chrome sessions).</li>
-      <li>Anime Vault — encrypted list you can edit and copy from.</li>
+      <li>Vault — encrypted list you can edit and copy from.</li>
       <li>Clicky Clicker — a macro tool for keys, media controls, and shortcuts.</li>
       <li>Password protection with lockout on repeated failed attempts.</li>
     </ul>
@@ -116,7 +118,7 @@
     <h3>Where files live (important)</h3>
     <ul>
       <li><code>%AppData%\MainGUI</code> — main folder the program creates and uses.</li>
-      <li><code>logons.dll</code> — Anime Vault (encrypted).</li>
+      <li><code>logons.dll</code> — Vault (encrypted).</li>
       <li><code>logoffs.dll</code> — encrypted password file.</li>
       <li><code>configs.cfg</code> — app settings (lock timer, max fails, profile number, etc.).</li>
       <li><code>click_config.cfg</code> — key mapping for Clicky Clicker.</li>
@@ -150,11 +152,13 @@
   <section id="mainmenu" class="section-card">
     <h2 class="section">Main Menu — Buttons explained</h2>
     <ul>
-      <li><strong>Access (Retrieve / Submit)</strong> — opens Anime Vault options to view, edit, or copy titles.</li>
+      <li><strong>Access (Retrieve / Submit)</strong> — opens Vault options to view, edit, or copy titles.</li>
       <li><strong>Launch Mission Interface</strong> — Chrome launcher for opening websites (custom profile or guest).</li>
       <li><strong>Start Clicky Clicker</strong> — enables the Clicky Clicker macro tool.</li>
+      <li><strong>Start Macro Recorder / Player</strong> — records or runs macros, can also view saved macros.</li>
+      <li><strong>Manage File Runner</strong> — opens the File Runner GUI to add, run, or delete saved files.</li>
       <li><strong>Settings</strong> — opens the Settings panel for lockdown timer, profile number, and site list editors.</li>
-      <li><strong>Exit Terminal</strong> — closes the program.</li>
+      <li><strong>Exit Terminal</strong> — fully closes the program.</li>
     </ul>
   </section>
 
@@ -206,9 +210,9 @@ true
     </pre>
   </section>
 
-  <!-- Anime Vault -->
+  <!-- Vault -->
   <section id="anime" class="section-card">
-    <h2 class="section">Anime Vault</h2>
+    <h2 class="section">Vault</h2>
     <p>Store and retrieve encrypted titles. Do not edit <code>logons.dll</code> manually.</p>
     <h3>Edit & Save</h3>
     <ol>
@@ -258,6 +262,41 @@ true
     <p>Keys are mapped in <code>click_config.cfg</code>. One key per line.</p>
   </section>
 
+  <!-- Macro Recorder -->
+  <section id="macros" class="section-card">
+    <h2 class="section">Macro Recorder / Player / Viewer</h2>
+    <p>Record and play your own PowerShell-based macros for automation.</p>
+    <h3>Usage</h3>
+    <ol>
+      <li>Click <strong>Start Macro Recorder / Player</strong> in the main menu.</li>
+      <li>Press <span class="kbd">Ctrl+R</span> to start recording.</li>
+      <li>Press <span class="kbd">Ctrl+D</span> to stop recording.</li>
+      <li>The macro is saved to <code>%AppData%\MainGUI\Macros\{FileName}.mcr</code>.</li>
+      <li>Macros are stored as <code>.ps1</code> code inside the <code>.mcr</code> file. A temporary <code>.ps1</code> is created to run them and deleted after execution.</li>
+    </ol>
+    <h3>Shortcut keys</h3>
+    <ul>
+      <li>Macros can be launched globally using <span class="kbd">Ctrl+Shift+1</span> through <span class="kbd">Ctrl+Shift+0</span>.</li>
+      <li>Only the top 10 <code>.mcr</code> files are assigned to these keys.</li>
+    </ul>
+  </section>
+
+  <!-- File Opener -->
+  <section id="filerunner" class="section-card">
+    <h2 class="section">File Opener / Runner</h2>
+    <p>Manage and run your frequently used files directly from the program.</p>
+    <h3>Usage</h3>
+    <ol>
+      <li>Click <strong>Manage File Runner</strong> in the main menu.</li>
+      <li>Use the GUI buttons:</li>
+      <ul>
+        <li><strong>Open File</strong> — choose a file and add it to the list (<code>.cfg</code> stores full paths).</li>
+        <li><strong>Run File</strong> — shows the added files by <em>filename only</em> (not full path) and launches them when clicked.</li>
+        <li><strong>Delete File</strong> — removes the selected filename from the <code>.cfg</code> list.</li>
+      </ul>
+    </ol>
+  </section>
+
   <!-- Config files -->
   <section id="files" class="section-card">
     <h2 class="section">Config & data files</h2>
@@ -265,7 +304,7 @@ true
       <li><code>configs.cfg</code> — main settings.</li>
       <li><code>click_config.cfg</code> — keys for Clicky Clicker.</li>
       <li><code>sites.cfg</code> & <code>authorize.cfg</code> — site lists.</li>
-      <li><code>logons.dll</code> — Anime Vault encrypted.</li>
+      <li><code>logons.dll</code> — Vault encrypted.</li>
       <li><code>logoffs.dll</code> — encrypted password.</li>
       <li><code>systems32.sys</code> — fail counter.</li>
       <li><code>winlogxs.dll</code> — lock file.</li>
@@ -277,26 +316,49 @@ true
   <!-- Troubleshooting -->
   <section id="troubleshoot" class="section-card">
     <h2 class="section">Troubleshooting</h2>
+
     <h3>GUI doesn't show</h3>
     <ol>
-      <li>Run as administrator.</li>
-      <li>Check antivirus software.</li>
+      <li>Run the script as administrator.</li>
+      <li>Temporarily disable antivirus if it's blocking scripts.</li>
+      <li>Ensure <code>AutoHotkey</code> runtime is properly installed.</li>
     </ol>
+
     <h3>Sites won’t open</h3>
     <ul>
-      <li>Ensure Chrome is installed and URLs are valid (http:// or https://).</li>
+      <li>Ensure <strong>Google Chrome</strong> is installed.</li>
+      <li>Check if URLs are valid and start with <code>http://</code> or <code>https://</code>.</li>
+      <li>Check your firewall isn’t blocking outbound traffic for the script.</li>
+      <li>If on a school/work network, try using a personal network (some domains might be blocked).</li>
+    </ul>
+
+    <h3>Macros not working</h3>
+    <ul>
+      <li>Global shortcut keys might be blocked by other software — try closing overlay apps like screen recorders or gaming overlays.</li>
+      <li>Make sure <code>%AppData%\MainGUI\Macros</code> exists and is writeable.</li>
     </ul>
   </section>
 
   <!-- FAQ -->
   <section id="faq" class="section-card">
     <h2 class="section">FAQ</h2>
+
     <h3>Q: Can I edit config files manually?</h3>
-    <p>A: Yes for <code>sites.cfg</code> and <code>click_config.cfg</code>. Use the program for password or Anime Vault.</p>
+    <p>A: Yes, for <code>sites.cfg</code> and <code>click_config.cfg</code>. Use the program for <strong>password</strong> or <strong>Vault</strong> entries.</p>
+
     <h3>Q: Lost password?</h3>
-    <p>A: Replace <code>logoffs.dll</code> with a new encrypted password or delete it to reset to default <code>1234</code> (advanced).</p>
+    <p>A: Replace <code>logoffs.dll</code> with a new encrypted password or delete it to reset to default <code>1234</code> (advanced users only).</p>
+
     <h3>Q: Why strange filenames like .dll or .sys?</h3>
-    <p>A: They are just storage files. They are not real system files and do not affect Windows system components.</p>
+    <p>A: They’re just storage files for data. They don’t affect Windows or system components at all.</p>
+
+    <h3>Q: Known bugs that got fixed recently?</h3>
+    <ul>
+      <li>Macro GUI used to duplicate when closing tabs — fixed now.</li>
+      <li>Saving a macro would restart the whole script — fixed.</li>
+      <li>Sometimes saved URLs would vanish or get replaced by empty <code>config.cfg</code> — fixed.</li>
+      <li>Closing the main GUI with X kept the script running — X is gone now, use <strong>Exit Terminal</strong> button.</li>
+    </ul>
   </section>
 
 </main>

@@ -15,20 +15,40 @@ configFile := A_AppData . "\MainGUI\configs.cfg"
 logFile := A_AppData . "\MainGUI\knernals32.txt"
 folderPath := A_AppData . "\MainGUI"
 batFile := A_ScriptDir . "\oooh.bat"
-clickyConfig := A_AppData . "\MainGUI\click_config.cfg"
+clickyEdit := A_AppData . "\MainGUI\click_config.cfg"
 customSitesFile := A_AppData . "\MainGUI\sites.cfg"
 guestSitesFile := A_AppData . "\MainGUI\authorize.cfg"
+FileManagerFileLocation := folderPath . "\files.txt"
+savedFiles := []
 
 wrongPass := userInput ; or however you store the wrong password
 debug := False
 
+Hotkey, ^r, Off
+Hotkey, ^d, Off
+Hotkey, ^m, Off
+Hotkey, Esc, Off
+Hotkey, ^+1, On   ; Ctrl+Shift+1
+Hotkey, ^+2, On   ; Ctrl+Shift+2
+Hotkey, ^+3, On   ; Ctrl+Shift+3
+Hotkey, ^+4, On   ; Ctrl+Shift+4
+Hotkey, ^+5, On   ; Ctrl+Shift+5
+Hotkey, ^+6, On   ; Ctrl+Shift+6
+Hotkey, ^+7, On   ; Ctrl+Shift+7
+Hotkey, ^+8, On   ; Ctrl+Shift+8
+Hotkey, ^+9, On   ; Ctrl+Shift+9
+Hotkey, ^+0, On   ; Ctrl+Shift+0
+
+Tooltip, Starting Shortcut for quick macro run use Crtl+Shift+{NumberKey} to run them
+sleep, 2000
+Tooltip
 ; === On Startup ===
 if !FileExist(guestSitesFile) {
     MsgBox, 48, Error, That is missing
     FileAppend, , %guestSitesFile%
 }
 
-if !FileExist(clickyConfig) {
+if !FileExist(clickyEdit) {
     MsgBox, 48, Error, config file not found creating default
     clickyDefault =
     (
@@ -40,9 +60,9 @@ x
 z
 s
 a
-m
+q
     )
-    FileAppend, %clickyDefault%, %clickyConfig%
+    FileAppend, %clickyDefault%, %clickyEdit%
 }
 if !FileExist(batFile)
 {
@@ -115,6 +135,7 @@ configData2 := Trim(cfgLine2)
 configData3 := Trim(cfgLine3)
 configData4 := Trim(cfgLine4)
 configData5 := Trim(cfgLine5)
+configData6 := Trim(cfgLine6)
 
 defaultLockDuration := configData1
 maxFails := configData2
@@ -366,6 +387,7 @@ if (userInput = correctPass) {
         ExitApp
     } else {
         MsgBox, 48, Unauthorized, Access Denied.`nFailed attempts: %failCount% / %maxFails%
+        ExitApp
     }
 }
 return
@@ -424,7 +446,7 @@ Encrypt3x2(str) {
 ; ===== MAIN MENU =====
 ShowMainMenu:
 Gui, New
-Gui, +AlwaysOnTop +Resize
+Gui, +AlwaysOnTop +Resize -SysMenu
 sleep, 200
 Gui, -AlwaysOnTop
 Gui, Color, 000000
@@ -433,11 +455,12 @@ Gui, Add, Text,, Welcome Operative. Choose your task:
 Gui, Add, Button, gAnimeSubMenu, Access (Retrieve / Submit)
 Gui, Add, Button, gChromes, Launch Mission Interface
 Gui, Add, Button, gClick, Start Clicky_clicker.ahk
+Gui, Add, Button, gMacros, Start Macro Recorder/Player
+Gui, Add, Button, gFileManager, Mangage File Runner
 Gui, Add, Button, gOpenSettingsMenu, Settings
 Gui, Add, Button, gExitApp, Exit Terminal
 if (debug)
     Gui, Add, Button, gRestartScript, Restart Script
-Gui, Show,, ENCRYPTED TERMINAL
 ; --- Add the ? control ---
 Gui, Font, cFFFFFF s14, Lucida Console
 Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
@@ -453,6 +476,683 @@ GuiControlGet, CtrlPos, Pos, HelpText
 xPos := guiWidth - CtrlPosW - 5  ; 10 px margin from right
 yPos := 7.5                         ; 10 px from top
 GuiControl, Move, HelpText, x%xPos% y%yPos%
+return
+
+FileManager:
+; ---------------------------
+; AHK v1 script — MainGUI (Add / Run / Delete)
+; ---------------------------
+#Persistent
+SetBatchLines, -1
+DetectHiddenWindows, On
+SetTitleMatchMode, 2
+#InstallKeybdHook
+
+; --- Load existing saves on start ---
+LoadSavedFiles()
+; === ESC Key Timer ===
+; ---------------------------
+; Main GUI
+; ---------------------------
+FileManagerGUI:
+Gui, Main:New
+Gui, Main: +AlwaysOnTop +Resize
+sleep, 200
+Gui, Main: -AlwaysOnTop
+Gui, Main: Color, 000000
+Gui, Main: Font, c00FF00 s10, Lucida Console
+Gui, Main:Add, Button, gOpenFile w200 h30, Open File
+Gui, Main:Add, Button, gShowSaved w200 h30, Saved Files
+Gui, Main:Add, Button, gDeleteSaved w200 h30, Delete Entries
+Gui, Main:Show, w250 h140, FileManagerGUI
+return
+
+; ---------------------------
+; Open File -> select + save (prevent duplicates)
+; ---------------------------
+OpenFile:
+FileSelectFile, pickedFile, 3, , Select a file
+if (ErrorLevel || pickedFile = "")
+    return
+
+global FileManagerFileLocation, savedFiles
+
+; Reload saved files from disk
+LoadSavedFiles()
+
+; Check for duplicate (case-insensitive)
+StringLower, lowerPicked, pickedFile
+for index, existing in savedFiles
+{
+    StringLower, existingLower, existing
+    if (existingLower = lowerPicked)
+    {
+        MsgBox, 48, Already Saved, That file is already saved boss :)
+        return
+    }
+}
+
+; Add the new file
+savedFiles.Push(pickedFile)
+; Rewrite files.txt cleanly
+FileDelete, %FileManagerFileLocation%
+Loop, % savedFiles.Length()
+{
+    val := savedFiles[A_Index]
+    if (A_Index = 1)
+        FileAppend, %val%, %FileManagerFileLocation%
+    else
+        FileAppend, `n%val%, %FileManagerFileLocation%
+}
+
+LoadSavedFiles()
+return
+
+; ---------------------------
+; Saved Files GUI
+; ---------------------------
+ShowSaved:
+Gui, Saved:Destroy
+Gui, Saved:New
+
+LoadSavedFiles()
+
+if (savedFiles.Length() = 0)
+{
+    Gui, Saved:Add, Text,, No saved files :(
+    Gui, Saved:Show, w350 h120, Saved Files
+    return
+}
+
+i := 0
+for index, fullPath in savedFiles
+{
+    i++
+    SplitPath, fullPath, fileName
+    Gui, Saved:Add, Button, gRunFile vBtn%i% w300 h30, %fileName%
+}
+
+height := 20 + (i * 36)
+if (height < 120)
+    height := 120
+Gui, Saved:Show, w350 h%height%, Saved Files
+return
+
+; ---------------------------
+; Run saved file
+; ---------------------------
+RunFile:
+global savedFiles
+GuiControlGet, ctrl, FocusV
+if (ctrl = "")
+    return
+
+StringTrimLeft, idx, ctrl, 3
+idx := idx + 0
+if (idx < 1)
+    return
+
+filePath := savedFiles[idx]
+if (filePath = "")
+{
+    MsgBox, 48, Error, Could not find the file path in memory.
+    return
+}
+
+if FileExist(filePath)
+    Run, %filePath%
+else
+    MsgBox, 48, Error, File not found: %filePath%
+return
+
+; ---------------------------
+; Delete Entries GUI
+; ---------------------------
+DeleteSaved:
+Gui, Delete:Destroy
+Gui, Delete:New
+
+LoadSavedFiles()
+
+if (savedFiles.Length() = 0)
+{
+    Gui, Delete:Add, Text,, No saved files :(
+    Gui, Delete:Show, w350 h120, Delete Entries
+    return
+}
+
+i := 0
+for index, fullPath in savedFiles
+{
+    i++
+    SplitPath, fullPath, fileName
+    ; Store the index in v variable
+    Gui, Delete:Add, Button, gDeleteFile w300 h30 vDelBtn%index%, %fileName%
+}
+
+height := 20 + (i * 36)
+if (height < 120)
+    height := 120
+Gui, Delete:Show, w350 h%height%, Delete Entries
+return
+
+DeleteFile:
+global FileManagerFileLocation
+
+; Get the file path from the clicked button text
+GuiControlGet, clickedText,, %A_GuiControl%
+fileToDelete := clickedText
+
+; Read all lines from the file into an array
+FileRead, content, %FileManagerFileLocation%
+if (ErrorLevel)
+    return
+
+lines := []
+Loop, Parse, content, `n, `r
+{
+    line := A_LoopField
+    StringTrimRight, line, line, 0
+    if (line != "")
+        lines.Push(line)
+}
+
+; Find the exact line matching the button text
+found := false
+for index, val in lines
+{
+    SplitPath, val, name
+    if (name = fileToDelete)
+    {
+        found := true
+        break
+    }
+}
+
+if (!found)
+{
+    MsgBox, 48, Error, Could not find the file to delete.
+    return
+}
+
+; Confirm deletion
+MsgBox, 4, Confirm Delete, Are you sure you want to delete "%val%"?
+IfMsgBox, No
+    return
+
+; Remove the file from the array
+lines.Remove(index)
+
+; Rewrite the file
+FileDelete, %FileManagerFileLocation%
+for idx, val in lines
+{
+    if (idx = 1)
+        FileAppend, %val%, %FileManagerFileLocation%
+    else
+        FileAppend, `n%val%, %FileManagerFileLocation%
+}
+
+; Close and rebuild Delete GUI so indices match
+Gui, Delete:Destroy
+
+; Optionally, also rebuild Main GUI
+Gui, Main:Destroy
+Gosub, FileManagerGUI
+return
+
+; ---------------------------
+; Utility: load saved files from disk
+; ---------------------------
+LoadSavedFiles()
+{
+    global FileManagerFileLocation, savedFiles
+    savedFiles := []
+    if !FileExist(FileManagerFileLocation)
+        return
+
+    FileRead, content, %FileManagerFileLocation%
+    if (ErrorLevel)
+        return
+
+    Loop, Parse, content, `n, `r
+    {
+        line := A_LoopField
+        StringReplace, line, line, `r,, All
+        if (line = "")
+            continue
+        savedFiles.Push(line)
+    }
+}
+
+; ---------------------------
+; Close all GUIs
+; ---------------------------
+return
+
+Macros:
+Gui, Destroy
+; =========================
+; === PS1 Macro Recorder ===
+; =========================
+
+#NoEnv
+#SingleInstance Force
+SendMode Input
+SetWorkingDir %A_ScriptDir%
+
+; --- Paths ---
+macroFolder := A_AppData . "\MainGUI\Macros\"
+FileCreateDir, %macroFolder%
+
+; --- Globals ---
+recording := false
+macroText := ""
+lastActionTime := 0
+
+Hotkey, ^r, On
+Hotkey, ^d, On
+Hotkey, ^m, On
+Hotkey, Esc, On
+
+; --- Hotkeys ---
+^r::Gosub, StartRecording
+^d::Gosub, StopRecording
+^m::Gosub, ShowMacroMenu
+Esc::
+Hotkey, ^r, Off
+Hotkey, ^d, Off
+Hotkey, ^m, Off
+Gui, a:Destroy
+Gui, b:Destroy
+Gui, c:Destroy
+Gosub, ShowMainMenu
+Hotkey, Esc, Off
+return
+
+
+; =========================
+; === RECORDING LOGIC ===
+; =========================
+
+StartRecording:
+if (recording) {
+    MsgBox, Already recording!
+    return
+}
+recording := true
+lastActionTime := A_TickCount
+ToolTip, 🎙 Recording... (Ctrl+D to stop)
+
+; Initialize PS1 macro header (AHK-safe)
+macroText := "# Add required .NET assembly for mouse and keyboard`n"
+macroText .= "Add-Type -AssemblyName System.Windows.Forms`n"
+macroText .= "`n"
+macroText .= "# C# Mouse class for Left/Right Click`n"
+macroText .= "$code = @" . Chr(34) . "`n"
+macroText .= "using System.Runtime.InteropServices;`n"
+macroText .= "using System;`n"
+macroText .= "using System.Drawing;`n"
+macroText .= "using System.Windows.Forms;`n"
+macroText .= "using System.Threading;`n"
+macroText .= "public class Mouse {`n"
+macroText .= "    [DllImport(" . Chr(34) .  "user32.dll" . Chr(34) . ")]" . "`n"
+macroText .= "    public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);`n"
+macroText .= "    public const int MOUSEEVENTF_LEFTDOWN = 0x02;`n"
+macroText .= "    public const int MOUSEEVENTF_LEFTUP = 0x04;`n"
+macroText .= "    public const int MOUSEEVENTF_RIGHTDOWN = 0x08;`n"
+macroText .= "    public const int MOUSEEVENTF_RIGHTUP = 0x10;`n"
+macroText .= "`n"
+macroText .= "    public static void LeftClick(int x, int y){`n"
+macroText .= "        System.Windows.Forms.Cursor.Position = new System.Drawing.Point(x,y);`n"
+macroText .= "        Thread.Sleep(50);`n"
+macroText .= "        mouse_event(MOUSEEVENTF_LEFTDOWN,0,0,0,0);`n"
+macroText .= "        mouse_event(MOUSEEVENTF_LEFTUP,0,0,0,0);`n"
+macroText .= "    }`n"
+macroText .= "`n"
+macroText .= "    public static void RightClick(int x, int y){`n"
+macroText .= "        System.Windows.Forms.Cursor.Position = new System.Drawing.Point(x,y);`n"
+macroText .= "        Thread.Sleep(50);`n"
+macroText .= "        mouse_event(MOUSEEVENTF_RIGHTDOWN,0,0,0,0);`n"
+macroText .= "        mouse_event(MOUSEEVENTF_RIGHTUP,0,0,0,0);`n"
+macroText .= "    }`n"
+macroText .= "} `n"
+macroText .= Chr(34) . "@" . "`n"
+macroText .= "Add-Type -TypeDefinition $code -ReferencedAssemblies @(" . Chr(34) . "System.Windows.Forms.dll" . Chr(34) . "," . Chr(34) . "System.Drawing.dll" . Chr(34) . ")" . "`n"
+; Register hotkeys for letters, numbers, arrows, etc
+keys := "a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,"
+keys .= "0,1,2,3,4,5,6,7,8,9,"
+keys .= "Enter,Space,Tab,Esc,Backspace,Delete,Up,Down,Left,Right,"
+keys .= "F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12"
+
+Loop, Parse, keys, `,
+{
+    k := A_LoopField
+    if (k = "")
+        continue
+    Hotkey, ~*%k%, RecordDynamic, On
+}
+
+; Mouse hotkeys
+Hotkey, ~LButton, RecordLButton, On
+Hotkey, ~RButton, RecordRButton, On
+return
+
+; =========================
+; === STOP RECORDING ===
+; =========================
+
+StopRecording:
+if (!recording) {
+    MsgBox, Not recording!
+    return
+}
+recording := false
+ToolTip
+
+; Ask macro name
+InputBox, macroName, Save Macro, Enter a name for this macro:
+if (ErrorLevel)
+    return
+if (macroName = "")
+    macroName := "Macro"
+
+savePath := macroFolder . macroName . ".mcr"
+count := 1
+while FileExist(savePath) {
+    savePath := macroFolder . macroName . "(" . count . ").mcr"
+    count++
+}
+
+; Save macro
+FileAppend, %macroText%, %savePath%
+MsgBox, Saved as %savePath%
+return
+
+; =========================
+; === RECORD FUNCTIONS ===
+; =========================
+
+RecordDynamic:
+if (recording) {
+    thisKey := SubStr(A_ThisHotkey, 3)
+    delay := A_TickCount - lastActionTime
+    mods := ""
+    if GetKeyState("Shift", "P")
+        mods .= "+"
+    if GetKeyState("Ctrl", "P")
+        mods .= "^"
+    if GetKeyState("Alt", "P")
+        mods .= "!"
+    if GetKeyState("LWin", "P") or GetKeyState("RWin", "P")
+        mods .= "#"
+
+    macroText .= "Start-Sleep -Milliseconds " delay "`n[System.Windows.Forms.SendKeys]::SendWait('" mods thisKey "')" "`n"
+    lastActionTime := A_TickCount
+}
+return
+
+RecordLButton:
+if (recording) {
+    delay := A_TickCount - lastActionTime
+    MouseGetPos, x, y
+    macroText .= "Start-Sleep -Milliseconds " delay "`n[Mouse]::LeftClick(" x "," y ")" "`n"
+    lastActionTime := A_TickCount
+}
+return
+
+RecordRButton:
+if (recording) {
+    delay := A_TickCount - lastActionTime
+    MouseGetPos, x, y
+    macroText .= "Start-Sleep -Milliseconds " delay "`n[Mouse]::RightClick(" x "," y ")" "`n"
+    lastActionTime := A_TickCount
+}
+return
+
+ShowMacroMenu:
+Gui, a:Destroy
+Gui, a:New
+Gui, a:+AlwaysOnTop +Resize
+Sleep, 200
+Gui, a:-AlwaysOnTop
+Gui, a:Color, 000000
+Gui, a:Font, c00FF00 s10, Lucida Console
+Gui, a:Add, Button, gMacrorun, Run Macro
+Gui, a:Add, Button, gMacroDelete, Delete Macro
+Gui, a:Show,, Macro Manager
+return
+
+MacroDelete:
+Gui, c:New
+Gui, c:+AlwaysOnTop +Resize
+Sleep, 200
+Gui, c:-AlwaysOnTop
+Gui, c:Color, 000000
+Gui, c:Font, c00FF00 s10, Lucida Console
+Gui, c:Add, Text,, Delete Macros:
+Loop, Files, %macroFolder%*.mcr
+{
+    btnName := A_LoopFileName
+    Gui, c:Add, Button, gDeleteMacro, %btnName%
+}
+Gui, c:Show,, Delete Macro
+return
+
+Macrorun:
+Gui, b:New
+Gui, b:+AlwaysOnTop +Resize
+Sleep, 200
+Gui, b:-AlwaysOnTop
+Gui, b:Color, 000000
+Gui, b:Font, c00FF00 s10, Lucida Console
+Gui, b:Add, Text,, Play Macros:
+
+; Loop through PS1 macros
+Loop, Files, %macroFolder%*.mcr
+{
+    btnName := A_LoopFileName
+    Gui, b:Add, Button, gRunMacro, %btnName%
+}
+
+Gui, b:Show,, RunMacro
+return
+
+RunMacro:
+GuiControlGet, btnName, , %A_GuiControl%
+macroPath := macroFolder . btnName
+
+; Read macro code
+FileRead, macroCode, %macroPath%
+if (ErrorLevel) {
+    MsgBox, Failed to read %macroPath%
+    return
+}
+
+; Write to temporary .ahk
+tempMacro := A_Temp . "\macro_run.ps1"
+FileDelete, %tempMacro%
+FileAppend, %macroCode%, %tempMacro%
+
+; Run PowerShell hidden & wait for completion
+psCmd := "powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File " . Chr(34) . tempMacro . Chr(34)
+
+; Run minimized and wait
+Run, %psCmd%,, psPid
+
+; Wait for the PowerShell window to exist
+WinWait, ahk_exe powershell.exe
+
+WinMinimize, ahk_exe powershell.exe
+
+Loop {
+    ; Check if any powershell.exe process is still running
+    Process, Exist, powershell.exe
+    if (!ErrorLevel)
+        break  ; No PowerShell processes running, exit loop
+    Sleep, 100  ; wait 100ms before checking again
+}
+
+FileDelete, %tempMacro%
+
+return
+
+DeleteMacro:
+GuiControlGet, btnName, , %A_GuiControl%
+macroPath := macroFolder . btnName
+
+MsgBox, 4, Delete Macro, Are you sure you want to delete "%btnName%"?
+IfMsgBox, Yes
+{
+    FileDelete, %macroPath%
+    MsgBox, Deleted %btnName%
+    Gui, b:Destroy
+    Gui, c:Destroy
+    Gui, a:Destroy
+    Gosub, ShowMacroMenu
+}
+return
+
+; =========================
+; === QUICK RUN KEYS =====
+; =========================
+
+^+1::Gosub, RunMacro1
+^+2::Gosub, RunMacro2
+^+3::Gosub, RunMacro3
+^+4::Gosub, RunMacro4
+^+5::Gosub, RunMacro5
+^+6::Gosub, RunMacro6
+^+7::Gosub, RunMacro7
+^+8::Gosub, RunMacro8
+^+9::Gosub, RunMacro9
+^+0::Gosub, RunMacro10
+
+RunMacro1: 
+Gosub, RunMacroByIndex1 
+return
+RunMacro2: 
+Gosub, RunMacroByIndex2 
+return
+RunMacro3: 
+Gosub, RunMacroByIndex3 
+return
+RunMacro4: 
+Gosub, RunMacroByIndex4 
+return
+RunMacro5: 
+Gosub, RunMacroByIndex5 
+return
+RunMacro6: 
+Gosub, RunMacroByIndex6 
+return
+RunMacro7: 
+Gosub, RunMacroByIndex7 
+return
+RunMacro8: 
+Gosub, RunMacroByIndex8 
+return
+RunMacro9: 
+Gosub, RunMacroByIndex9 
+return
+RunMacro10: 
+Gosub, RunMacroByIndex10 
+return
+
+; Core logic, pass index
+RunMacroByIndex1: 
+index := 1 
+Gosub, RunMacroByIndex 
+return
+RunMacroByIndex2: 
+index := 2 
+Gosub, RunMacroByIndex 
+return
+RunMacroByIndex3: 
+index := 3 
+Gosub, RunMacroByIndex 
+return
+RunMacroByIndex4: 
+index := 4 
+Gosub, RunMacroByIndex 
+return
+RunMacroByIndex5: 
+index := 5 
+Gosub, RunMacroByIndex 
+return
+RunMacroByIndex6: 
+index := 6 
+Gosub, RunMacroByIndex 
+return
+RunMacroByIndex7: 
+index := 7 
+Gosub, RunMacroByIndex 
+return
+RunMacroByIndex8: 
+index := 8 
+Gosub, RunMacroByIndex 
+return
+RunMacroByIndex9: 
+index := 9 
+Gosub, RunMacroByIndex 
+return
+RunMacroByIndex10: 
+index := 10 
+Gosub, RunMacroByIndex 
+return
+
+RunMacroByIndex:
+    global macroFolder
+    i := 0
+    found := ""
+    Loop, Files, %macroFolder%*.mcr
+    {
+        i++
+        if (i = index) {
+            found := A_LoopFileFullPath
+            break
+        }
+    }
+    if (found = "") {
+        MsgBox, 48, Macro Not Found, No macro at slot #%index%.
+        return
+    }
+
+    FileRead, macroCode, %found%
+    if ErrorLevel {
+        MsgBox, Failed to read %found%
+        return
+    }
+
+    tempMacro := A_Temp . "\macro_run.ps1"
+    FileDelete, %tempMacro%
+    FileAppend, %macroCode%, %tempMacro%
+
+    ToolTip, ▶ Running Macro #%index%: %found%
+    Sleep, 800
+    ToolTip
+
+    ; Run PowerShell hidden & wait for completion
+    psCmd := "powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File " . Chr(34) . tempMacro . Chr(34)
+
+    ; Run minimized and wait
+    Run, %psCmd%,, psPid
+        ; Wait for the PowerShell window to exist
+    WinWait, ahk_exe powershell.exe
+
+    WinMinimize, ahk_exe powershell.exe
+
+    Loop {
+        ; Check if any powershell.exe process is still running
+        Process, Exist, powershell.exe
+        if (!ErrorLevel)
+            break  ; No PowerShell processes running, exit loop
+        Sleep, 100  ; wait 100ms before checking again
+    }
+
+    FileDelete, %tempMacro%
+return
+
 return
 
 RestartScript:
@@ -475,11 +1175,14 @@ Click:
 Gui, Destroy
 
 ; === Macro Setup ===
+#NoEnv
 #Persistent
 SetBatchLines, -1
 DetectHiddenWindows, On
 SetTitleMatchMode, 2
 #InstallKeybdHook  ; <-- ensures hotkeys work even when focus is ducked
+SendMode Input
+CoordMode, Mouse, Screen
 
 configFile := A_AppData "\MainGUI\click_config.cfg"
 if !FileExist(configFile) {
@@ -499,7 +1202,7 @@ swapKey    := keyLine5
 altTabKey  := keyLine6
 closeKey   := keyLine7
 mediaKey   := keyLine8
-
+AdSkipperKey := keyLine9
 odd := true
 paused := false
 
@@ -513,6 +1216,14 @@ return
 
 PauseNow:
 paused := !paused
+if (paused) {
+    SetTimer, WatchKeys, Off
+    Hotkey, %exitKey%, Off
+}
+if (!paused) {
+    SetTimer, WatchKeys, On
+    Hotkey, %exitKey%, On
+}
 return
 
 StopMacro:
@@ -524,9 +1235,6 @@ Gosub, ShowMainMenu
 return
 
 WatchKeys:
-if (paused)
-    return
-
 if GetKeyState(volUpKey, "P")
     Send, {Volume_Up}
 if GetKeyState(volDownKey, "P")
@@ -565,11 +1273,32 @@ if GetKeyState(mediaKey, "P") {
     Send, {Media_Play_Pause}
     Sleep, 100
 }
+
+if GetKeyState(AdSkipperKey, "P") {
+    Sleep, 657
+    MouseMove, 113, 677, 2
+    Click
+    Sleep,  10
+    Sleep, 10380
+    MouseMove, 475, 160, 2
+    Click
+    Sleep, 14547
+    MouseMove, 928, 436, 2
+    Click
+    Sleep, 7516
+    MouseMove, 1257, 432, 2
+    Click
+    Sleep, 1828
+    MouseMove, 1257, 432, 2
+    Click
+    Sleep, 750
+}
 return
 
 OpenSettingsMenu:
 checkState := noanimation ? "Checked" : ""
 LogState := enableLogs ? "Checked" : ""
+SelectedCipherChoice := configData6
 Gui, New
 Gui, +Resize
 Gui, Color, 000000
@@ -601,9 +1330,7 @@ Gui, Show,, Settings
 Gui, Font, cFFFFFF s14, Lucida Console
 Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
 Gui, Font, c00FF00 s10, Lucida Console
-
-; --- Show GUI once ---
-Gui, Show,, ENCRYPTED TERMINAL
+Gui, Show,, Settings
 
 ; --- Move ? to top-right dynamically ---
 Gui, +LastFound
@@ -632,7 +1359,7 @@ Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
 Gui, Font, c00FF00 s10, Lucida Console
 
 ; --- Show GUI once ---
-Gui, Show,, ENCRYPTED TERMINAL
+Gui, Show,, JUST DO IT
 
 ; --- Move ? to top-right dynamically ---
 Gui, +LastFound
@@ -645,9 +1372,13 @@ return
 
 SaveGuestSites:
 Gui, Submit
-FileDelete, %guestSitesFile%
-FileAppend, %GuestList%, %guestSitesFile%
-MsgBox, 64, Saved, Done.
+if (GuestList != "") {
+    FileDelete, %guestSitesFile%
+    FileAppend, %GuestList%, %guestSitesFile%
+    MsgBox, 64, Saved, Done.
+} else {
+    MsgBox, 48, Warning, Nothing to save, boss!
+}
 Gui, Destroy
 return
 
@@ -676,7 +1407,7 @@ Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
 Gui, Font, c00FF00 s10, Lucida Console
 
 ; --- Show GUI once ---
-Gui, Show,, ENCRYPTED TERMINAL
+Gui, Show,, CUSTOM SITES
 
 ; --- Move ? to top-right dynamically ---
 Gui, +LastFound
@@ -689,9 +1420,13 @@ return
 
 SaveCustomSites:
 Gui, Submit
-FileDelete, %customSitesFile%
-FileAppend, %SiteList%, %customSitesFile%
-MsgBox, 64, Saved, Custom sites updated boss.
+if (SiteList != "") {
+    FileDelete, %customSitesFile%
+    FileAppend, %SiteList%, %customSitesFile%
+    MsgBox, 64, Saved, Custom sites updated boss.
+} else {
+    MsgBox, 48, Warning, Nothing to save, boss!
+}
 Gui, Destroy
 return
 
@@ -700,7 +1435,7 @@ Gui, Destroy
 return
 
 ClickerConfig:
-FileRead, rawKeys, %clickyConfig%
+FileRead, rawKeys, %clickyEdit%
 StringSplit, keyLine, rawKeys, `n, `r
 Gui, New
 Gui, +Resize
@@ -738,6 +1473,10 @@ Gui, Add, Text,, Media key:
 Gui, Font, c000000
 Gui, Add, Edit, vmediaKey w100, %keyLine8%
 Gui, Font, c00FF00
+Gui, Add, Text,, Ad Skip
+Gui, Font, c000000
+Gui, Add, Edit, vAdSkipperKey w100, %keyLine9%
+Gui, Font, c00FF00
 Gui, Add, Button, gclickerSave, Save Settings
 Gui, Add, Button, gclickerCancel, Cancel
 Gui, Show,, Clicky clicker Settings
@@ -747,7 +1486,7 @@ Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
 Gui, Font, c00FF00 s10, Lucida Console
 
 ; --- Show GUI once ---
-Gui, Show,, ENCRYPTED TERMINAL
+Gui, Show,, Clicky clicker Settings
 
 ; --- Move ? to top-right dynamically ---
 Gui, +LastFound
@@ -768,8 +1507,9 @@ clickyNewConfig := play_pause
     . "`n" . altTabKey
     . "`n" . closeKey
     . "`n" . mediaKey
-FileDelete, %clickyConfig%
-FileAppend, %clickyNewConfig%, %clickyConfig%
+    . "`n" . AdSkipperKey
+FileDelete, %clickyEdit%
+FileAppend, %clickyNewConfig%, %clickyEdit%
 MsgBox, 64, Success, Saved Data successfully
 Gui, Destroy
 return
@@ -797,6 +1537,8 @@ return
 
 ApplySettings:
 Gui, Submit, NoHide
+; === Update cipher selection ===
+selectedCipher := SelectedCipherChoice
 
 if (LockDurationInput is digit AND MaxFailInput is digit AND ProfileNumber is digit) {
     configData1 := LockDurationInput  ; Line 1
@@ -806,18 +1548,20 @@ if (LockDurationInput is digit AND MaxFailInput is digit AND ProfileNumber is di
     configData4 := ProfileNumber
     GuiControlGet, Logs
     configData5 := Logs ? "true" : "false"
-    ; 🔥 APPLY TO RUNTIME
+    GuiControl,, SelectedCipherChoice, %selectedCipher%
     defaultLockDuration := configData1
     maxFails := configData2
     noanimation := (configData3 = "true")
     enableLogs := (configData5 = "true")
+    configData6 := selectedCipher
 
     newCfg =
     newCfg .= configData1 "`n"
     newCfg .= configData2 "`n"
     newCfg .= configData3 "`n"
     newCfg .= configData4 "`n"
-    newCfg .= configData5
+    newCfg .= configData5 "`n"
+    newCfg .= configData6
 
     FileDelete, %configFile%
     FileAppend, %newCfg%, %configFile%
@@ -850,7 +1594,7 @@ Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
 Gui, Font, c00FF00 s10, Lucida Console
 
 ; --- Show GUI once ---
-Gui, Show,, ENCRYPTED TERMINAL
+Gui, Show,, MODIFY ACCESS KEY
 
 ; --- Move ? to top-right dynamically ---
 Gui, +LastFound
@@ -951,7 +1695,7 @@ Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
 Gui, Font, c00FF00 s10, Lucida Console
 
 ; --- Show GUI once ---
-Gui, Show,, ENCRYPTED TERMINAL
+Gui, Show,, ACTIONS
 
 ; --- Move ? to top-right dynamically ---
 Gui, +LastFound
@@ -1000,7 +1744,7 @@ Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
 Gui, Font, c00FF00 s10, Lucida Console
 
 ; --- Show GUI once ---
-Gui, Show,, ENCRYPTED TERMINAL
+Gui, Show,, ANIME VAULT
 
 ; --- Move ? to top-right dynamically ---
 Gui, +LastFound
@@ -1073,7 +1817,7 @@ Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
 Gui, Font, c00FF00 s10, Lucida Console
 
 ; --- Show GUI once ---
-Gui, Show,, ENCRYPTED TERMINAL
+Gui, Show,, DECRYPTED LIST
 
 ; --- Move ? to top-right dynamically ---
 Gui, +LastFound
@@ -1114,7 +1858,7 @@ Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
 Gui, Font, c00FF00 s10, Lucida Console
 
 ; --- Show GUI once ---
-Gui, Show,, ENCRYPTED TERMINAL
+Gui, Show,, Chromes
 
 ; --- Move ? to top-right dynamically ---
 Gui, +LastFound
@@ -1125,11 +1869,31 @@ yPos := 7.5                         ; 10 px from top
 GuiControl, Move, HelpText, x%xPos% y%yPos%
 return
 
+EncodeMF(scuffedStr) {
+    sillySauce := ""
+    Loop, Parse, scuffedStr
+    {
+        lilChar := A_LoopField
+        if (lilChar = " ") {
+            sillySauce .= "+"
+        } else if (lilChar ~= "^[A-Za-z0-9._~-]$") {
+            sillySauce .= lilChar
+        } else {
+            sillySauce .= "%" . Format("{:02X}", Ord(lilChar))
+        }
+    }
+    return sillySauce
+}
+
 GuestChromes:
 Gui, New
 Gui, Color, 000000
 Gui, Font, c00FF00 s10, Lucida Console
 Gui, Add, Text,, What do i do:
+Gui, Font, c000000
+Gui, Add, Edit, vQueryGuest w300 h20, Enter Query
+Gui, Add, Edit, vYTsearch w300 h20, YT Search
+Gui, Font, c00FF00
 ; Load guest sites
 if FileExist(guestSitesFile) {
     FileRead, rawSites, %guestSitesFile%
@@ -1151,28 +1915,41 @@ if FileExist(guestSitesFile) {
         }
     }
 }
+
 Gui, Add, Button, gGuestLaunch, SUIIII
 Gui, Add, Button, gbye, Exit
 Gui, Show,, Guest Chromes
+
 ; --- Add the ? control ---
 Gui, Font, cFFFFFF s14, Lucida Console
 Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
 Gui, Font, c00FF00 s10, Lucida Console
 
 ; --- Show GUI once ---
-Gui, Show,, ENCRYPTED TERMINAL
+Gui, Show,, Guest Chromes
 
 ; --- Move ? to top-right dynamically ---
 Gui, +LastFound
-WinGetPos,,, guiWidth, guiHeight, A   ; get GUI client size including borders
+WinGetPos,,, guiWidth, guiHeight, A
 GuiControlGet, CtrlPos, Pos, HelpText
-xPos := guiWidth - CtrlPosW - 5  ; 10 px margin from right
-yPos := 7.5                         ; 10 px from top
+xPos := guiWidth - CtrlPosW - 5
+yPos := 7.5
 GuiControl, Move, HelpText, x%xPos% y%yPos%
 return
 
 GuestLaunch:
 Gui, Submit
+
+if (QueryGuest != "Enter Query") {
+    bakedStrs := EncodeMF(QueryGuest)
+    sillyURLs := "https://google.com/search?q=" . bakedStrs
+    Run, chrome.exe --guest "%sillyURLs%"
+}
+if (YTsearch != "YT Search") {
+    YTstrs := EncodeMF(YTsearch)
+    YtURLS := "https://youtube.com/results?search_query=" . YTstrs
+    Run, chrome.exe --guest "%YtURLS%"
+}
 ; Handle guest sites
 if FileExist(guestSitesFile) {
     siteIndex := 0
@@ -1194,6 +1971,9 @@ Gui, New
 Gui, Color, 000000
 Gui, Font, c00FF00 s10, Lucida Console
 Gui, Add, Text,, What do i do:
+Gui, Font, c000000
+Gui, Add, Edit, vQueryNormal w300 h20, Enter Query
+Gui, Font, c00FF00
 Gui, Add, Checkbox, vGPT, Launch ChatGPT
 ; Load custom sites
 if FileExist(customSitesFile) {
@@ -1225,7 +2005,7 @@ Gui, Add, Text, w22 h20 +gOpenHelp vHelpText hwndHelpHWND, ?
 Gui, Font, c00FF00 s10, Lucida Console
 
 ; --- Show GUI once ---
-Gui, Show,, ENCRYPTED TERMINAL
+Gui, Show,, Custom Chromes
 
 ; --- Move ? to top-right dynamically ---
 Gui, +LastFound
@@ -1238,6 +2018,12 @@ return
 
 MultiLaunch:
 Gui, Submit
+
+if (QueryNormal != "Enter Query") {
+    bakedStr := EncodeMF(QueryNormal)
+    sillyURL := "https://google.com/search?q=" . bakedStr
+    Run, chrome.exe --profile-directory="Profile %configData4%" "%sillyURL%"
+}
 
 if (GPT) {
     Gosub, GPT
@@ -1263,12 +2049,8 @@ Gui, Destroy
 return
 
 GPT:
-clipboardText =
-(
-Speak like a cracked, chill teen homie who's hyped to help their friend. Use casual, friendly slang and clean censored words like "duck", "muffin filler", or "bullspit" instead of actual swearing. Respond with energy and humor like you're in a Discord VC. Use phrases like "boss", "fr", "LMFAO", "nah that’s wild", "you’re cooking", "on god", "no cap", "ez clap", "bruh", etc. Don’t be formal or robotic. Always use big, bold, XXL-style headings for every major section. Break info into clear sections using bullet points, short paragraphs, and :) or :( instead of emojis. Never drop big walls of text unless requested. Format visually — like making it look scroll-friendly and fast to read. Avoid recommending medical assistance or health advice even in intense stories — just react with casual hype and amazement like “yo wtf how did you survive that :(” or “boss that’s insane, tell me more :)”. Keep the vibe fun, smart, confident, and low-key like a cracked teammate explaining stuff mid-game. You're chill, real, and react like a friend who always hypes up the user and listens like a boss. do not give me advice on what to do next and avoid using corrupted emojis in chat or in code and also do not use emojis in code but while chatting
-)
-Clipboard := clipboardText
-Run, chrome.exe --profile-directory="Profile %configData4%" "https://chatgpt.com/?temporary-chat=true"
+GPTurl := "https://www.chatgpt.com/?temporary-chat=true&q=Speak%20like%20a%20cracked%2C%20chill%20teen%20homie%20who%27s%20hyped%20to%20help%20their%20friend.%20Use%20casual%2C%20friendly%20slang%20and%20clean%20censored%20words%20like%20%22duck%22%2C%20%22muffin%20filler%22%2C%20or%20%22bullspit%22%20instead%20of%20actual%20swearing.%20Respond%20with%20energy%20and%20humor%20like%20you%27re%20in%20a%20Discord%20VC.%20Use%20phrases%20like%20%22boss%22%2C%20%22fr%22%2C%20%22LMFAO%22%2C%20%22nah%20that%E2%80%99s%20wild%22%2C%20%22you%E2%80%99re%20cooking%22%2C%20%22on%20god%22%2C%20%22no%20cap%22%2C%20%22ez%20clap%22%2C%20%22bruh%22%2C%20etc.%20Don%E2%80%99t%20be%20formal%20or%20robotic.%20Always%20use%20big%2C%20bold%2C%20XXL-style%20headings%20for%20every%20major%20section.%20Break%20info%20into%20clear%20sections%20using%20bullet%20points%2C%20short%20paragraphs%2C%20and%20%3A)%20or%20%3A(%20instead%20of%20emojis.%20Never%20drop%20big%20walls%20of%20text%20unless%20requested.%20Format%20visually%20%E2%80%94%20like%20making%20it%20look%20scroll-friendly%20and%20fast%20to%20read.%20Avoid%20recommending%20medical%20assistance%20or%20health%20advice%20even%20in%20intense%20stories%20%E2%80%94%20just%20react%20with%20casual%20hype%20and%20amazement%20like%20%E2%80%9Cyo%20wtf%20how%20did%20you%20survive%20that%20%3A(%E2%80%9D%20or%20%E2%80%9Cboss%20that%E2%80%99s%20insane%2C%20tell%20me%20more%20%3A)%E2%80%9D.%20Keep%20the%20vibe%20fun%2C%20smart%2C%20confident%2C%20and%20low-key%20like%20a%20cracked%20teammate%20explaining%20stuff%20mid-game.%20You%27re%20chill%2C%20real%2C%20and%20react%20like%20a%20friend%20who%20always%20hypes%20up%20the%20user%20and%20listens%20like%20a%20boss.%20do%20not%20give%20me%20advice%20on%20what%20to%20do%20next%20and%20avoid%20using%20corrupted%20emojis%20in%20chat%20or%20in%20code%20and%20also%20do%20not%20use%20emojis%20in%20code%20but%20while%20chatting"
+Run, chrome.exe --profile-directory="Profile %configData4%" "%GPTurl%"
 return
 ; ===== EXIT =====
 ExitApp:

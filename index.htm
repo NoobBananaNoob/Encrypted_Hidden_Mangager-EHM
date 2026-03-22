@@ -1,0 +1,1287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MainGUI — Complete Help</title>
+<link rel="icon" type="image/png" href="index.png" />
+
+<style>
+  /* ── Root tokens ── */
+  :root {
+    --bg: #07121f;
+    --card: #0b1624;
+    --accent: #00d166;
+    --accent2: #00ffaa;
+    --muted: #7a8fa0;
+    --glass: rgba(0,209,102,0.04);
+    --border: rgba(0,209,102,0.08);
+    --radius: 14px;
+    --maxw: 1120px;
+    --glow: 0 0 18px rgba(0,209,102,0.18);
+    font-family: 'Lucida Console', 'Courier New', monospace;
+  }
+
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 125%; }
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,209,102,0.06) 0%, transparent 70%),
+      linear-gradient(180deg, #071229 0%, #07121f 100%);
+    color: #d4f5e5;
+    overflow-x: hidden;
+  }
+
+  /* ── Scanline overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+    animation: scanmove 8s linear infinite;
+  }
+  @keyframes scanmove {
+    0%   { background-position: 0 0; }
+    100% { background-position: 0 80px; }
+  }
+
+  /* ── Matrix rain canvas ── */
+  #matrix-canvas {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.045;
+  }
+
+  /* ── Navbar ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    padding: 10px 22px;
+    background: rgba(7,18,31,0.88);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; gap: 4px 2px; align-items: center;
+    animation: slideDown 0.5s ease both;
+  }
+  @keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to   { transform: translateY(0);     opacity: 1; }
+  }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+  }
+  nav a:hover { color: var(--accent); background: var(--glass); }
+  nav .sep { color: rgba(255,255,255,0.1); font-size: 0.7rem; }
+
+  /* ── Header ── */
+  header {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px 32px 18px;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .logo-wrap { display: flex; align-items: center; gap: 14px; }
+  .logo-icon {
+    width: 44px; height: 44px;
+    border: 1.5px solid var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.375rem;
+    box-shadow: var(--glow);
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 12px rgba(0,209,102,0.2); }
+    50%       { box-shadow: 0 0 28px rgba(0,209,102,0.45); }
+  }
+  h1 { font-size: 1.25rem; letter-spacing: 1px; color: var(--accent); text-shadow: 0 0 12px rgba(0,209,102,0.4); }
+  .sub { color: var(--muted); font-size: 0.75rem; margin-top: 5px; }
+  .header-right { text-align: right; }
+  .kbd {
+    font-family: 'Lucida Console', monospace;
+    background: rgba(0,209,102,0.08);
+    border: 1px solid var(--border);
+    padding: 2px 7px; border-radius: 5px;
+    font-size: 0.75rem; color: var(--accent);
+  }
+
+  /* ── Container ── */
+  .container {
+    position: relative; z-index: 1;
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 22px 40px;
+  }
+
+  /* ── Cards row ── */
+  .row { display: flex; gap: 18px; flex-wrap: wrap; margin: 22px 0; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card);
+    padding: 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    flex: 1 1 280px; min-width: 260px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    animation: fadeUp 0.6s ease both;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6), var(--glow);
+    border-color: rgba(0,209,102,0.2);
+  }
+  .card h2 { margin: 0 0 12px; color: var(--accent); font-size: 0.94rem; letter-spacing: 0.5px; }
+
+  /* ── Section cards ── */
+  .section-card {
+    margin: 20px 0;
+    padding: 22px;
+    border-radius: var(--radius);
+    background: linear-gradient(160deg, rgba(11,22,36,0.95), rgba(7,18,31,0.98));
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.3s ease;
+  }
+  .section-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .section-card:hover { border-color: rgba(0,209,102,0.15); }
+
+  h2.section {
+    color: var(--accent);
+    font-size: 0.94rem;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  h2.section::before { content: '▸'; font-size: 0.8rem; color: var(--accent2); }
+
+  h3 {
+    color: var(--accent2);
+    font-size: 0.8rem;
+    margin: 16px 0 8px;
+    letter-spacing: 0.5px;
+  }
+
+  p { font-size: 0.8rem; line-height: 1.7; color: #b8d9c8; }
+  ul, ol { padding-left: 20px; }
+  ul li, ol li { margin: 8px 0; font-size: 0.8rem; color: #b8d9c8; line-height: 1.6; }
+
+  /* ── Code / pre ── */
+  code {
+    background: rgba(0,209,102,0.07);
+    border: 1px solid var(--border);
+    padding: 1px 6px; border-radius: 4px;
+    font-family: 'Lucida Console', monospace;
+    font-size: 0.75rem; color: var(--accent);
+  }
+  pre {
+    background: #040e17;
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    border-radius: 8px;
+    color: var(--accent2);
+    overflow: auto;
+    font-size: 0.75rem;
+    line-height: 1.7;
+    position: relative;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+  }
+  pre::before {
+    content: '// config';
+    position: absolute; top: 8px; right: 12px;
+    font-size: 0.625rem; color: var(--muted); opacity: 0.5;
+  }
+
+  /* ── Quick link grid ── */
+  .quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 10px; margin-top: 12px; }
+  .link {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    padding: 11px 14px;
+    border-radius: 9px;
+    font-size: 0.75rem;
+    cursor: pointer; color: #b8d9c8;
+    transition: all 0.2s ease;
+    position: relative; overflow: hidden;
+  }
+  .link::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(0,209,102,0.06), transparent);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .link:hover { border-color: rgba(0,209,102,0.3); color: var(--accent); transform: translateY(-2px); box-shadow: var(--glow); }
+  .link:hover::after { opacity: 1; }
+
+  /* ── Details / Accordion ── */
+  details {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  details[open] { border-color: rgba(0,209,102,0.2); }
+  details summary {
+    cursor: pointer;
+    padding: 11px 14px;
+    background: rgba(0,209,102,0.04);
+    font-size: 0.8rem; color: var(--accent);
+    list-style: none;
+    display: flex; align-items: center; gap: 8px;
+    transition: background 0.2s;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: '▶'; font-size: 0.625rem; transition: transform 0.25s ease; }
+  details[open] summary::before { transform: rotate(90deg); }
+  details summary:hover { background: rgba(0,209,102,0.08); }
+  details > *:not(summary) { padding: 14px; }
+
+  /* ── Status table ── */
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+    gap: 10px; margin-top: 12px;
+  }
+  .status-item {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.75rem;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(0,209,102,0.6); }
+    50%       { opacity: 0.3; box-shadow: none; }
+  }
+  .status-dot.red   { background: #ff4466; animation: blinkRed 1.8s ease-in-out infinite; }
+  @keyframes blinkRed {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(255,68,102,0.6); }
+    50%       { opacity: 0.3; }
+  }
+
+  /* ── Boot animation demo ── */
+  .terminal-demo {
+    background: #030c13;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    font-family: 'Lucida Console', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    margin-top: 14px;
+    min-height: 100px;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5), var(--glow);
+    position: relative;
+    overflow: hidden;
+  }
+  .terminal-demo::before {
+    content: 'SYSTEM BOOT';
+    position: absolute; top: 8px; right: 12px;
+    font-size: 0.625rem; color: var(--muted); opacity: 0.5;
+  }
+  .terminal-line { display: block; margin: 3px 0; white-space: pre; }
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--accent);
+    animation: cursorBlink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+  @keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+  }
+
+  /* ── Encryption demo ── */
+  .cipher-demo {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 12px 16px;
+    margin-top: 10px; flex-wrap: wrap;
+  }
+  .cipher-box {
+    font-family: 'Lucida Console', monospace;
+    font-size: 0.75rem;
+    background: rgba(0,209,102,0.05);
+    border: 1px solid var(--border);
+    padding: 6px 12px; border-radius: 6px;
+  }
+  .cipher-arrow { color: var(--accent); font-size: 1rem; }
+
+  /* ── File table ── */
+  .file-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.75rem; }
+  .file-table th {
+    text-align: left; color: var(--accent);
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+    font-size: 0.7rem; letter-spacing: 0.5px;
+  }
+  .file-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.02); color: #a8c8b8; }
+  .file-table tr:hover td { background: var(--glass); }
+
+  /* ── Button pill badges ── */
+  .badge {
+    display: inline-block;
+    background: rgba(0,209,102,0.1);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 20px;
+    margin-left: 6px;
+  }
+  .badge.red { background: rgba(255,68,102,0.1); border-color: rgba(255,68,102,0.2); color: #ff4466; }
+  .badge.yellow { background: rgba(255,200,0,0.1); border-color: rgba(255,200,0,0.2); color: #ffd700; }
+
+  /* ── TOC quick links ── */
+  .toc { font-size: 0.75rem; color: var(--muted); margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .toc a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .toc a:hover { color: var(--accent); }
+
+  /* ── Hotkey chip grid ── */
+  .hotkey-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .hotkey-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+  }
+  .hotkey-chip:hover { border-color: rgba(0,209,102,0.3); transform: translateY(-1px); }
+  .hotkey-chip .k { color: var(--accent); font-family: 'Lucida Console', monospace; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,209,102,0.25); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(0,209,102,0.45); }
+
+  /* ── Footer ── */
+  footer {
+    position: relative; z-index: 1;
+    color: var(--muted); font-size: 0.7rem;
+    padding: 32px 8px; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  footer .green { color: var(--accent); }
+
+  /* ── Animations (staggered cards) ── */
+  .card:nth-child(1) { animation-delay: 0.1s; }
+  .card:nth-child(2) { animation-delay: 0.25s; }
+  .card:nth-child(3) { animation-delay: 0.4s; }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .row { flex-direction: column; }
+    nav { overflow-x: auto; white-space: nowrap; }
+    .cipher-demo { flex-direction: column; align-items: flex-start; }
+  }
+
+  /* ── Glitch text animation for h1 on load ── */
+  @keyframes glitch {
+    0%   { text-shadow: 0 0 12px rgba(0,209,102,0.4); }
+    10%  { text-shadow: -2px 0 rgba(255,0,80,0.6), 2px 0 rgba(0,255,200,0.6); }
+    11%  { text-shadow: 0 0 12px rgba(0,209,102,0.4); }
+    50%  { text-shadow: 0 0 20px rgba(0,209,102,0.6); }
+    90%  { text-shadow: 2px 0 rgba(255,0,80,0.4), -2px 0 rgba(0,255,200,0.4); }
+    91%  { text-shadow: 0 0 12px rgba(0,209,102,0.4); }
+    100% { text-shadow: 0 0 12px rgba(0,209,102,0.4); }
+  }
+  h1 { animation: glitch 6s ease-in-out infinite; }
+
+  /* ── Progress bar style for lock ── */
+  .lock-bar-wrap {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 20px; height: 6px; overflow: hidden;
+    margin-top: 8px;
+  }
+  .lock-bar {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 20px;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 8px rgba(0,209,102,0.5);
+  }
+
+  /* ── Tooltip ── */
+  [data-tip] { position: relative; }
+  [data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%);
+    background: #0b1624; border: 1px solid var(--border);
+    color: var(--accent); font-size: 0.7rem; padding: 4px 10px;
+    border-radius: 6px; white-space: nowrap; z-index: 200;
+    animation: tooltipIn 0.15s ease;
+  }
+  @keyframes tooltipIn { from { opacity: 0; transform: translateX(-50%) translateY(4px); } }
+
+  .green { color: var(--accent); }
+  .small { font-size: 0.75rem; color: var(--muted); }
+
+  /* ── Screenshots ── */
+  .screenshot-wrap {
+    margin-top: 16px;
+    display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;
+  }
+  .screenshot-wrap.center { justify-content: center; }
+  .screenshot {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.6), var(--glow);
+    background: #000;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    max-width: 100%;
+    cursor: zoom-in;
+  }
+  .screenshot:hover {
+    transform: scale(1.02) translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 28px rgba(0,209,102,0.3);
+  }
+  .screenshot img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+  .screenshot-label {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.4);
+    border-top: 1px solid var(--border);
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Lightbox ── */
+  #lightbox {
+    display: none;
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0,0,0,0.92);
+    align-items: center; justify-content: center;
+    cursor: zoom-out;
+    animation: lbIn 0.2s ease;
+  }
+  #lightbox.open { display: flex; }
+  @keyframes lbIn { from { opacity: 0; } to { opacity: 1; } }
+  #lightbox img {
+    max-width: 90vw; max-height: 90vh;
+    border-radius: 10px;
+    box-shadow: 0 0 60px rgba(0,209,102,0.2);
+    border: 1px solid var(--border);
+  }
+  #lightbox-close {
+    position: absolute; top: 18px; right: 24px;
+    color: var(--accent); font-size: 1.5rem; cursor: pointer;
+    background: none; border: none;
+    font-family: 'Lucida Console', monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- Matrix rain canvas -->
+<canvas id="matrix-canvas"></canvas>
+
+<!-- Lightbox -->
+<div id="lightbox">
+  <button id="lightbox-close">✕</button>
+  <img id="lightbox-img" src="" alt="" />
+</div>
+
+<nav>
+  <a href="#home">🏠 Home</a><span class="sep">|</span>
+  <a href="#overview">Overview</a><span class="sep">|</span>
+  <a href="#getting">Getting Started</a><span class="sep">|</span>
+  <a href="#mainmenu">Main Menu</a><span class="sep">|</span>
+  <a href="#password">Password & Security</a><span class="sep">|</span>
+  <a href="#settings">Settings</a><span class="sep">|</span>
+  <a href="#anime">Anime Vault</a><span class="sep">|</span>
+  <a href="#chromes">Chromes</a><span class="sep">|</span>
+  <a href="#clicky">Clicky Clicker</a><span class="sep">|</span>
+  <a href="#macros">Macro Recorder</a><span class="sep">|</span>
+  <a href="#filemanager">File Runner</a><span class="sep">|</span>
+  <a href="#hotkeys">Hotkeys</a><span class="sep">|</span>
+  <a href="#files">Config Files</a><span class="sep">|</span>
+  <a href="#troubleshoot">Troubleshooting</a><span class="sep">|</span>
+  <a href="#faq">FAQ</a>
+</nav>
+
+<header>
+  <div class="logo-wrap">
+    <div class="logo-icon">⚿</div>
+    <div>
+      <h1>MainGUI — Complete Help</h1>
+      <div class="sub">Full manual · Clear steps · All features covered</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="sub">Drop the <strong>help folder</strong> next to the program EXE</div>
+    <div style="margin-top:6px" class="small">Press <span class="kbd">F1</span> to re-open this help page</div>
+  </div>
+</header>
+
+<main class="container" id="home">
+
+  <!-- Quick start + tips row -->
+  <section class="row">
+    <article class="card">
+      <h2>Quick Start</h2>
+      <ol>
+        <li>Place the EXE and a folder named <code>help</code> in the same directory.</li>
+        <li>Save this file as <code>help/index.htm</code>.</li>
+        <li>Double-click the EXE to launch. Default password is <strong class="green">1234</strong>.</li>
+        <li>Click <span class="kbd">?</span> inside the GUI or press <span class="kbd">F1</span> to open help.</li>
+      </ol>
+      <div class="toc" style="margin-top:14px">
+        <strong style="color:var(--muted)">Jump to →</strong>
+        <a href="#overview">Overview</a> ·
+        <a href="#password">Security</a> ·
+        <a href="#settings">Settings</a> ·
+        <a href="#anime">Anime Vault</a> ·
+        <a href="#chromes">Chromes</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2>Fast Tips</h2>
+      <div class="quick">
+        <div class="link" data-tip="Default on first run">Default password: <strong class="green">1234</strong></div>
+        <div class="link" data-tip="Settings → Change Access Key">Change password in Settings panel</div>
+        <div class="link" data-tip="Settings → Manage Custom/Guest Sites">Edit site lists from Settings</div>
+        <div class="link" data-tip="Auto-created on first run">Config folder: <code>%AppData%\MainGUI</code></div>
+      </div>
+      <details style="margin-top:12px">
+        <summary>Quick troubleshooting</summary>
+        <p class="small">If the GUI doesn't show: try running as administrator. Antivirus may block the EXE. If locked out, delete <code>winlogxs.dll</code> from <code>%AppData%\MainGUI</code>.</p>
+      </details>
+    </article>
+
+    <article class="card">
+      <h2>System Status</h2>
+      <div class="status-grid">
+        <div class="status-item"><span class="status-dot"></span>Boot Animation</div>
+        <div class="status-item"><span class="status-dot"></span>Anime Vault</div>
+        <div class="status-item"><span class="status-dot"></span>Chrome Launcher</div>
+        <div class="status-item"><span class="status-dot"></span>Clicky Clicker</div>
+        <div class="status-item"><span class="status-dot"></span>Macro Recorder</div>
+        <div class="status-item"><span class="status-dot"></span>File Runner</div>
+        <div class="status-item"><span class="status-dot"></span>Daily Backup</div>
+        <div class="status-item"><span class="status-dot red"></span>Locked (if active)</div>
+      </div>
+    </article>
+  </section>
+
+  <!-- Boot animation demo -->
+  <section id="overview" class="section-card">
+    <h2 class="section">Overview</h2>
+    <p>This program is a terminal-style automation hub with password protection, an encrypted Anime Vault, Chrome launchers, a key macro tool, a macro recorder/player, a file runner, and more.</p>
+
+    <h3>Boot Sequence Demo</h3>
+    <p class="small">When animations are enabled in Settings, you'll see this on each launch:</p>
+    <div class="terminal-demo" id="termDemo">
+      <span class="terminal-line" style="color:var(--muted)">&gt; SYSTEM BOOT</span>
+    </div>
+
+    <div class="screenshot-wrap center" style="margin-top:14px">
+      <div class="screenshot" onclick="openLightbox(this)">
+        <img src="dat/anime.gif" alt="Boot animation — Loading assets..." />
+        <div class="screenshot-label">Boot animation — plays on every launch (if animations enabled)</div>
+      </div>
+    </div>
+
+    <h3>What gets created on first run</h3>
+    <p>If the <code>%AppData%\MainGUI</code> folder or any required file is missing, the program creates it automatically with safe defaults.</p>
+    <ul>
+      <li>Default password set to <code>1234</code> (stored encrypted).</li>
+      <li><code>configs.cfg</code> created with lock timer = 60s, max fails = 3, profile = 7.</li>
+      <li><code>oooh.bat</code> helper created for logging wrong password attempts.</li>
+      <li><code>authorize.cfg</code> and <code>sites.cfg</code> created empty.</li>
+      <li>Tray icon set from <code>icon.png</code> in the script directory (if it exists).</li>
+    </ul>
+  </section>
+
+  <!-- Getting started -->
+  <section id="getting" class="section-card">
+    <h2 class="section">Getting Started</h2>
+
+    <h3>First run</h3>
+    <ol>
+      <li>Double-click the program EXE to run.</li>
+      <li>The boot animation plays (dots loading: <em>Loading assets… Unpacking modules… Injecting core…</em>).</li>
+      <li>The <strong>ACCESS PORTAL</strong> password dialog appears. Enter <code>1234</code> on first run.</li>
+      <li>After a successful login, the boot sequence plays again (<em>Authorizing session… Activating interface…</em>) then the main GUI opens.</li>
+    </ol>
+
+    <h3>Login details</h3>
+    <ul>
+      <li>Password is <strong>case-insensitive</strong> — "HELLO" and "hello" are the same.</li>
+      <li>Check <em>Show Password</em> in the login dialog to reveal what you typed.</li>
+      <li>Failed attempts are counted; too many trigger a timed lockdown.</li>
+    </ul>
+
+    <div class="screenshot-wrap center">
+      <div class="screenshot" onclick="openLightbox(this)">
+        <img src="dat/pass.PNG" alt="ACCESS PORTAL login dialog" />
+        <div class="screenshot-label">ACCESS PORTAL — password dialog</div>
+      </div>
+    </div>
+
+    <h3>Open / Exit / Restart</h3>
+    <ul>
+      <li>The main GUI is titled <em>ENCRYPTED TERMINAL</em>. Click any button to access a feature.</li>
+      <li>Click <strong>Exit Terminal</strong> to close the program.</li>
+      <li>To reload after editing config files, close and reopen the EXE.</li>
+    </ul>
+  </section>
+
+  <!-- Main menu -->
+  <section id="mainmenu" class="section-card">
+    <h2 class="section">Main Menu — All Buttons Explained</h2>
+
+    <div class="screenshot-wrap center">
+      <div class="screenshot" onclick="openLightbox(this)">
+        <img src="dat/menu.PNG" alt="ENCRYPTED TERMINAL main menu" />
+        <div class="screenshot-label">ENCRYPTED TERMINAL — main menu (all unlocked)</div>
+      </div>
+    </div>
+
+    <table class="file-table">
+      <thead>
+        <tr>
+          <th>Button</th>
+          <th>What it does</th>
+          <th>Requires unlock?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Access (Retrieve / Submit)</code></td>
+          <td>Opens Anime Vault sub-menu (Edit List, Search Anime Entry)</td>
+          <td><span class="badge yellow">Vault lock</span></td>
+        </tr>
+        <tr>
+          <td><code>Launch Mission Interface</code></td>
+          <td>Opens the Chromes launcher window (custom profile sites + guest sites via <strong>That</strong> button)</td>
+          <td><span class="badge yellow">Chrome lock</span></td>
+        </tr>
+        <tr>
+          <td><code>Start Clicky_clicker.ahk</code></td>
+          <td>Enables the Clicky Clicker macro key tool</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td><code>Start Macro Recorder/Player</code></td>
+          <td>Opens the Macro Recorder / Player window</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td><code>Mangage File Runner</code></td>
+          <td>File picker and runner — save and launch files quickly</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td><code>Settings</code></td>
+          <td>Opens Settings panel</td>
+          <td><span class="badge yellow">Settings lock</span></td>
+        </tr>
+        <tr>
+          <td><code>⚿ Lock button</code></td>
+          <td>Unlock all areas at once with password, or re-lock them</td>
+          <td>Password required to unlock</td>
+        </tr>
+        <tr>
+          <td><code>Exit Terminal</code></td>
+          <td>Closes the program</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td><code>?</code> (top-right corner)</td>
+          <td>Opens this help file in your browser</td>
+          <td>No</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Lock status indicators</h3>
+    <p>The main GUI shows three status lines below the lock button:</p>
+    <div class="status-grid" style="margin-top:10px">
+      <div class="status-item"><span class="status-dot"></span>Vault — Locked / Unlocked</div>
+      <div class="status-item"><span class="status-dot"></span>Chrome — Locked / Unlocked</div>
+      <div class="status-item"><span class="status-dot"></span>Settings — Locked / Unlocked</div>
+    </div>
+  </section>
+
+  <!-- Password & Security -->
+  <section id="password" class="section-card">
+    <h2 class="section">Password & Security</h2>
+    <p>Access is protected by an encrypted password with a fail counter and automatic timed lockout system.</p>
+
+    <h3>How lockout works</h3>
+    <ul>
+      <li>Each wrong password increments a counter in <code>systems32.sys</code>.</li>
+      <li>When the counter reaches a multiple of <strong>Max Failed Attempts</strong>, a lockdown is triggered.</li>
+      <li>Lockdown duration grows: 1× = base duration, 2× = 2× base, and so on.</li>
+      <li>At <strong>1000 failures</strong>, the lock is set for 100 years (permanent lockout).</li>
+      <li>Lock expiry is stored in <code>winlogxs.dll</code> as a UTC timestamp.</li>
+    </ul>
+
+    <div class="lock-bar-wrap" style="margin-top:14px">
+      <div class="lock-bar" id="lockBar"></div>
+    </div>
+    <div class="small" style="margin-top:6px">↑ Visualised: fail counter progress toward lockout (resets on success)</div>
+
+    <h3>Wrong password logging</h3>
+    <ul>
+      <li>If <em>Enable Logs</em> is on in Settings, each wrong attempt is written to <code>knernals32.txt</code> via <code>oooh.bat</code>.</li>
+      <li>Log entries include the UTC timestamp and whatever was typed.</li>
+      <li>The batch file is auto-created if missing.</li>
+    </ul>
+
+    <h3>How encryption works</h3>
+    <p>Passwords and Anime Vault titles use an <strong>affine cipher</strong> — each letter is transformed by the formula <code>(3x + 2) mod 26</code>. The reverse (decryption) finds <code>x</code> for each encrypted character.</p>
+    <div class="cipher-demo">
+      <span class="cipher-box">plaintext <em>a</em> (x=1)</span>
+      <span class="cipher-arrow">→ (3×1+2) mod 26 = 5 →</span>
+      <span class="cipher-box">encrypted <em>e</em></span>
+    </div>
+    <p class="small" style="margin-top:8px">You don't need to understand this to use the program. Just set your password via Settings.</p>
+
+    <h3>Change password</h3>
+    <ol>
+      <li>Open <strong>Settings → Change Access Key</strong>.</li>
+      <li>Enter the old password and the new password twice to confirm.</li>
+      <li>The new password is immediately saved encrypted to <code>logoffs.dll</code>.</li>
+    </ol>
+
+    <h3>If you lock yourself out</h3>
+    <p class="small">Delete <code>%AppData%\MainGUI\winlogxs.dll</code> to clear the lock. Your password is unchanged. To reset the fail counter, delete <code>systems32.sys</code>.</p>
+  </section>
+
+  <!-- Settings -->
+  <section id="settings" class="section-card">
+    <h2 class="section">Settings — Plain English</h2>
+    <p>Open <strong>Settings</strong> from the main menu (password required). Changes are saved to <code>configs.cfg</code>.</p>
+
+    <div class="screenshot-wrap center">
+      <div class="screenshot" onclick="openLightbox(this)">
+        <img src="dat/set.PNG" alt="Settings Panel" />
+        <div class="screenshot-label">SETTINGS PANEL</div>
+      </div>
+    </div>
+
+    <table class="file-table">
+      <thead>
+        <tr><th>Field / Control</th><th>Default shown</th><th>What it does</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>Open Selection Menu</code> button</td><td>—</td><td>Change the default folder where essential files are stored (default: AppData)</td></tr>
+        <tr><td><code>Change Access Key</code> button</td><td>—</td><td>Opens password change dialog (old key + new key + confirm)</td></tr>
+        <tr><td>Lockdown Timer (seconds)</td><td><code>60</code></td><td>Lock duration per set of failed attempts</td></tr>
+        <tr><td>Max Failed Attempts Before Lockdown</td><td><code>5</code></td><td>How many wrong passwords before lockout triggers</td></tr>
+        <tr><td>☑ Tick to Enable and Untick to Disable Backup</td><td>Checked</td><td>Auto-backup MainGUI folder daily</td></tr>
+        <tr><td>☑ Tick to Enable and Untick to Disable Animations</td><td>Checked</td><td>Show boot animation on launch</td></tr>
+        <tr><td>Profile Number (Chrome Shortcut)</td><td><code>7</code></td><td>Which Chrome profile is used for custom sites</td></tr>
+        <tr><td>Force Brightness Transparency (Decrease Only)</td><td><code>150</code></td><td>Opacity value for the Force Brightness overlay in Clicky Clicker</td></tr>
+        <tr><td>☑ Tick to Enable and Untick to Disable Logs</td><td>Checked</td><td>Record wrong password attempts to <code>knernals32.txt</code></td></tr>
+        <tr><td><code>Edit Config File for Clicky_clicker.ahk</code></td><td>—</td><td>Opens the key mapping editor for Clicky Clicker</td></tr>
+        <tr><td><code>Manage Custom Sites</code></td><td>—</td><td>Edit <code>sites.cfg</code> — one URL per line, opened in profile Chrome</td></tr>
+        <tr><td><code>Manage That</code></td><td>—</td><td>Edit <code>authorize.cfg</code> — one URL per line, opened in guest Chrome</td></tr>
+        <tr><td><code>Save Settings</code></td><td>—</td><td>Writes all changes to <code>configs.cfg</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Default configs.cfg content</h3>
+    <pre>60
+3
+true
+7
+true
+
+
+true</pre>
+
+    <h3>Daily Auto-Backup</h3>
+    <p>When line 8 is <code>true</code>, a dated copy of your <code>%AppData%\MainGUI</code> folder is saved to <code>%AppData%\backup\Backup_YYYY-MM-DD_…</code> once every 24 hours. The last backup time is tracked in <code>backup_time.txt</code> (in the script directory).</p>
+
+    <h3>Manage site lists</h3>
+    <p>Edit via <strong>Settings → Manage Custom Sites</strong> (for <code>sites.cfg</code>) or <strong>Settings → Manage That</strong> (for guest sites in <code>authorize.cfg</code>). One full URL per line. Click Save to apply.</p>
+  </section>
+
+  <!-- Anime Vault -->
+  <section id="anime" class="section-card">
+    <h2 class="section">Anime Vault</h2>
+    <p>Store and retrieve encrypted anime/media titles. The vault is protected by the same affine cipher as the password. Never edit <code>logons.dll</code> manually.</p>
+
+    <h3>Add or edit titles</h3>
+    <ol>
+      <li>From Main Menu, click <strong>Access (Retrieve / Submit)</strong>.</li>
+      <li>Select <strong>Edit Anime List</strong>.</li>
+      <li>Enter one title per line.</li>
+      <li>Click <strong>Save & Encrypt</strong>. The file is re-written encrypted.</li>
+    </ol>
+
+    <h3>Search a stored title</h3>
+    <ol>
+      <li>Click <strong>Access → Search Anime Entry</strong>.</li>
+      <li>Select a radio button next to the title you want.</li>
+      <li>Click <strong>Search Selected Title</strong> — it opens a Google search for that title in a Chrome guest session.</li>
+    </ol>
+
+    <h3>Access control</h3>
+    <p>The Anime Vault can be individually locked/unlocked. Use the <span class="kbd">⚿</span> lock button in the main menu to unlock all sections at once, or access it directly (the vault status shows <em>Locked / Unlocked</em> on the main screen).</p>
+  </section>
+
+  <!-- Chromes / Launchers -->
+  <section id="chromes" class="section-card">
+    <h2 class="section">Chromes / Mission Launcher</h2>
+    <p>Launch multiple websites in one click, either under your personal Chrome profile or in an isolated guest session.</p>
+
+    <div class="screenshot-wrap">
+      <div class="screenshot" onclick="openLightbox(this)" style="flex:1;min-width:200px">
+        <img src="dat/normal_chrome.PNG" alt="Chromes window - locked (no guest section)" />
+        <div class="screenshot-label">Chromes — guest section locked (That not yet clicked)</div>
+      </div>
+      <div class="screenshot" onclick="openLightbox(this)" style="flex:1;min-width:200px">
+        <img src="dat/authenticated_chrome.PNG" alt="Chromes window - guest section unlocked" />
+        <div class="screenshot-label">Chromes — guest section unlocked (after clicking That)</div>
+      </div>
+    </div>
+
+    <h3>Chromes window buttons</h3>
+    <table class="file-table">
+      <thead><tr><th>Button</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>GOOOO</code></td><td>Launches everything at once — profile query, checked custom sites, guest query, guest link, YT search, and checked guest sites</td></tr>
+        <tr><td><code>That</code></td><td>Unlock / lock the guest section. When locked, guest fields and guest site list are hidden. Requires password to unlock.</td></tr>
+        <tr><td><code>Exit</code></td><td>Closes the Chromes window</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Guest section — unlocked by "That"</h3>
+    <p>The guest fields only appear after clicking <strong>That</strong> and entering the correct password (<code>thatistrue</code> flag). Once unlocked you'll see:</p>
+    <ul>
+      <li><em>Enter Query</em> (guest) → Google search in <code>--guest</code> Chrome session.</li>
+      <li><em>YT Search</em> → YouTube search in guest mode.</li>
+      <li><em>Enter Link</em> → opens that exact URL in guest mode.</li>
+      <li>A guest site list (from <code>authorize.cfg</code>) with checkboxes — check the ones you want to open.</li>
+    </ul>
+
+    <h3>How launching works (GOOOO)</h3>
+    <table class="file-table">
+      <thead><tr><th>What you fill in</th><th>Chrome mode used</th><th>Source file</th></tr></thead>
+      <tbody>
+        <tr><td>Normal Query box</td><td><code>--profile-directory="Profile N"</code></td><td>—</td></tr>
+        <tr><td>Checked Custom Sites</td><td><code>--profile-directory="Profile N"</code></td><td><code>sites.cfg</code></td></tr>
+        <tr><td>Guest Query box</td><td><code>--guest</code></td><td>—</td></tr>
+        <tr><td>Enter Link box</td><td><code>--guest</code></td><td>—</td></tr>
+        <tr><td>YT Search box</td><td><code>--guest</code></td><td>—</td></tr>
+        <tr><td>Checked Guest Sites</td><td><code>--guest</code></td><td><code>authorize.cfg</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Tips</h3>
+    <ul>
+      <li>Chrome must be installed and accessible from the system PATH.</li>
+      <li>The profile number in Settings determines which Chrome profile is used for custom sites.</li>
+      <li>Add or remove URLs via Settings → Manage Custom Sites (custom) or <em>Manage That</em> (guest).</li>
+      <li>Guest site list displays human-readable titles — the script extracts the title and chapter number from manga/series URLs automatically.</li>
+      <li>Custom site list displays only the main domain name (e.g. <em>youtube</em> from <code>https://youtube.com/…</code>).</li>
+    </ul>
+  </section>
+
+  <!-- Clicky Clicker -->
+  <section id="clicky" class="section-card">
+    <h2 class="section">Clicky Clicker</h2>
+    <p>A macro key tool that maps a configurable key sequence to common actions. Useful for media control, window management, and quick shortcuts without touching the mouse.</p>
+
+    <h3>What it can do (default key map)</h3>
+    <table class="file-table">
+      <thead><tr><th>Key (position in config)</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>1 — <code>Esc</code></td><td>Stop / cancel current action</td></tr>
+        <tr><td>2 — <code>h</code></td><td>Volume Up</td></tr>
+        <tr><td>3 — <code>[</code></td><td>Volume Down</td></tr>
+        <tr><td>4 — <code>]</code></td><td>Swap / Alt+Tab mix</td></tr>
+        <tr><td>5 — <code>x</code></td><td>Alt+Tab emulation</td></tr>
+        <tr><td>6 — <code>z</code></td><td>Close window (Alt+F4)</td></tr>
+        <tr><td>7 — <code>s</code></td><td>Media Play/Pause</td></tr>
+        <tr><td>8 — <code>a</code></td><td>Previous track</td></tr>
+        <tr><td>9 — <code>q</code></td><td>Next track</td></tr>
+        <tr><td>10 — <code>s</code></td><td>Extra/custom</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Customise keys</h3>
+    <p>Edit <code>%AppData%\MainGUI\click_config.cfg</code> — one key per line, in the same order as the table above. Restart Clicky Clicker after saving.</p>
+  </section>
+
+  <!-- Macro Recorder -->
+  <section id="macros" class="section-card">
+    <h2 class="section">Macro Recorder / Player</h2>
+    <p>Record keyboard and mouse actions, save them as macros, and replay them on demand.</p>
+
+    <h3>Quick Macro Shortcuts</h3>
+    <p>The following global hotkeys are enabled at startup:</p>
+    <div class="hotkey-grid">
+      <div class="hotkey-chip"><span class="k">Ctrl+Shift+1</span> → Macro slot 1</div>
+      <div class="hotkey-chip"><span class="k">Ctrl+Shift+2</span> → Macro slot 2</div>
+      <div class="hotkey-chip"><span class="k">Ctrl+Shift+3</span> → Macro slot 3</div>
+      <div class="hotkey-chip"><span class="k">Ctrl+Shift+4</span> → Macro slot 4</div>
+      <div class="hotkey-chip"><span class="k">Ctrl+Shift+5</span> → Macro slot 5</div>
+      <div class="hotkey-chip"><span class="k">Ctrl+Shift+6</span> → Macro slot 6</div>
+      <div class="hotkey-chip"><span class="k">Ctrl+Shift+7</span> → Macro slot 7</div>
+      <div class="hotkey-chip"><span class="k">Ctrl+Shift+8</span> → Macro slot 8</div>
+      <div class="hotkey-chip"><span class="k">Ctrl+Shift+9</span> → Macro slot 9</div>
+      <div class="hotkey-chip"><span class="k">Ctrl+Shift+0</span> → Macro slot 10</div>
+    </div>
+    <p class="small" style="margin-top:10px">A startup tooltip reminds you: <em>"Starting Shortcut — use Ctrl+Shift+{NumberKey} to run them"</em></p>
+
+    <h3>Disabled by default</h3>
+    <p>The following hotkeys are <em>off</em> at startup for safety and won't interfere with other programs:</p>
+    <div class="hotkey-grid">
+      <div class="hotkey-chip" style="opacity:0.5"><span class="k">Ctrl+R</span> — Off</div>
+      <div class="hotkey-chip" style="opacity:0.5"><span class="k">Ctrl+D</span> — Off</div>
+      <div class="hotkey-chip" style="opacity:0.5"><span class="k">Ctrl+M</span> — Off</div>
+      <div class="hotkey-chip" style="opacity:0.5"><span class="k">Esc</span> — Off</div>
+    </div>
+  </section>
+
+  <!-- File Runner -->
+  <section id="filemanager" class="section-card">
+    <h2 class="section">File Runner (Manage File Runner)</h2>
+    <p>Save shortcuts to files you use often and launch them in one click. File paths are stored in <code>%AppData%\MainGUI\files.txt</code>.</p>
+
+    <h3>How to use</h3>
+    <ol>
+      <li>Click <strong>Manage File Runner</strong> from Main Menu.</li>
+      <li>Click <strong>Open File</strong> to browse and save a file path. Duplicates are detected and skipped.</li>
+      <li>Click <strong>Saved Files</strong> to see all saved entries. Click any filename button to launch it.</li>
+      <li>Click <strong>Delete Entries</strong> to remove a saved entry from the list.</li>
+    </ol>
+
+    <h3>Notes</h3>
+    <ul>
+      <li>Duplicate detection is case-insensitive.</li>
+      <li>If a file is missing from disk, you'll see an error when trying to run it.</li>
+      <li>File paths are stored in <code>files.txt</code>, one per line.</li>
+    </ul>
+  </section>
+
+  <!-- Hotkeys reference -->
+  <section id="hotkeys" class="section-card">
+    <h2 class="section">Global Hotkeys Reference</h2>
+    <table class="file-table">
+      <thead><tr><th>Hotkey</th><th>State</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><code>Ctrl+Shift+1…0</code></td><td><span class="badge">ON</span></td><td>Run macro slots 1–10</td></tr>
+        <tr><td><code>Ctrl+R</code></td><td><span class="badge red">OFF</span></td><td>Disabled at startup</td></tr>
+        <tr><td><code>Ctrl+D</code></td><td><span class="badge red">OFF</span></td><td>Disabled at startup</td></tr>
+        <tr><td><code>Ctrl+M</code></td><td><span class="badge red">OFF</span></td><td>Disabled at startup</td></tr>
+        <tr><td><code>Esc</code></td><td><span class="badge red">OFF</span></td><td>Disabled at startup</td></tr>
+        <tr><td><code>F1</code></td><td><span class="badge">ON</span></td><td>Open this help page</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Config files -->
+  <section id="files" class="section-card">
+    <h2 class="section">Config &amp; Data Files</h2>
+    <p>All files live in <code>%AppData%\MainGUI</code> unless stated otherwise.</p>
+
+    <table class="file-table">
+      <thead><tr><th>File</th><th>Purpose</th><th>Edit manually?</th></tr></thead>
+      <tbody>
+        <tr><td><code>configs.cfg</code></td><td>Main settings (timer, fails, profile, backup…)</td><td><span class="badge yellow">Use Settings</span></td></tr>
+        <tr><td><code>click_config.cfg</code></td><td>Key map for Clicky Clicker</td><td><span class="badge">Yes</span></td></tr>
+        <tr><td><code>sites.cfg</code></td><td>Custom Chrome site list</td><td><span class="badge">Yes</span></td></tr>
+        <tr><td><code>authorize.cfg</code></td><td>Guest Chrome site list</td><td><span class="badge">Yes</span></td></tr>
+        <tr><td><code>logons.dll</code></td><td>Anime Vault (encrypted)</td><td><span class="badge red">No</span></td></tr>
+        <tr><td><code>logoffs.dll</code></td><td>Encrypted password</td><td><span class="badge red">No</span></td></tr>
+        <tr><td><code>systems32.sys</code></td><td>Wrong password fail counter</td><td><span class="badge red">No</span></td></tr>
+        <tr><td><code>winlogxs.dll</code></td><td>Lockdown timestamp</td><td><span class="badge yellow">Delete to unlock</span></td></tr>
+        <tr><td><code>knernals32.txt</code></td><td>Wrong password attempt log</td><td><span class="badge">Yes (read-only safe)</span></td></tr>
+        <tr><td><code>files.txt</code></td><td>File Runner saved paths</td><td><span class="badge yellow">Use File Runner</span></td></tr>
+        <tr><td><code>oooh.bat</code> (script dir)</td><td>Helper batch for logging wrong passwords</td><td><span class="badge red">No</span></td></tr>
+        <tr><td><code>backup_time.txt</code> (script dir)</td><td>Timestamp of last backup</td><td><span class="badge red">No</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Note on file extensions</h3>
+    <p class="small"><code>.dll</code> and <code>.sys</code> filenames are used for camouflage only. They are plain text files and have no effect on Windows system components whatsoever.</p>
+  </section>
+
+  <!-- Troubleshooting -->
+  <section id="troubleshoot" class="section-card">
+    <h2 class="section">Troubleshooting</h2>
+
+    <details>
+      <summary>GUI doesn't appear</summary>
+      <ul>
+        <li>Right-click the EXE → Run as administrator.</li>
+        <li>Check Windows Defender / antivirus: it may quarantine the script runner.</li>
+        <li>Make sure AutoHotkey v1 is installed on the machine.</li>
+      </ul>
+    </details>
+
+    <details style="margin-top:10px">
+      <summary>Sites won't open in Chrome</summary>
+      <ul>
+        <li>Make sure Chrome is installed and <code>chrome.exe</code> is on the system PATH.</li>
+        <li>All URLs must include <code>http://</code> or <code>https://</code>.</li>
+        <li>Check that the Profile Number in Settings matches a real Chrome profile folder.</li>
+      </ul>
+    </details>
+
+    <details style="margin-top:10px">
+      <summary>Password accepted but nothing happens</summary>
+      <ul>
+        <li>Check if the boot animation is stuck — it may be disabled if <em>Disable Animations</em> is <code>true</code>.</li>
+        <li>Restart the program. The main GUI (<em>ENCRYPTED TERMINAL</em>) should appear.</li>
+      </ul>
+    </details>
+
+    <details style="margin-top:10px">
+      <summary>Locked out and timer hasn't expired</summary>
+      <ul>
+        <li>Navigate to <code>%AppData%\MainGUI</code> and delete <code>winlogxs.dll</code>.</li>
+        <li>Also delete <code>systems32.sys</code> to reset the fail counter.</li>
+        <li>Restart the program — the lockdown is now cleared.</li>
+      </ul>
+    </details>
+
+    <details style="margin-top:10px">
+      <summary>Anime Vault shows garbled text</summary>
+      <p class="small">Do not manually edit <code>logons.dll</code>. If it is corrupted, delete it. The program will create a fresh empty file. Re-add your titles via the Edit Anime List option.</p>
+    </details>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="section-card">
+    <h2 class="section">FAQ</h2>
+
+    <details>
+      <summary>Q: Can I edit config files manually?</summary>
+      <p>A: Yes for <code>sites.cfg</code>, <code>authorize.cfg</code>, and <code>click_config.cfg</code>. Always use the program for <code>logoffs.dll</code> (password) and <code>logons.dll</code> (Anime Vault) — these are encrypted.</p>
+    </details>
+
+    <details style="margin-top:10px">
+      <summary>Q: I forgot my password. What do I do?</summary>
+      <p>A: Delete <code>%AppData%\MainGUI\logoffs.dll</code>. On the next run, the program will create a new file with the default password <code>1234</code>. You will lose any previously set password.</p>
+    </details>
+
+    <details style="margin-top:10px">
+      <summary>Q: Why are files named .dll or .sys?</summary>
+      <p>A: They are plain text files. The extensions are used purely for disguise. They will not affect Windows and are not real system libraries or drivers.</p>
+    </details>
+
+    <details style="margin-top:10px">
+      <summary>Q: What is the backup feature?</summary>
+      <p>A: When line 8 of <code>configs.cfg</code> is <code>true</code>, the program backs up <code>%AppData%\MainGUI</code> to <code>%AppData%\backup</code> once per day. Backups are dated folders. You can restore by copying files back manually.</p>
+    </details>
+
+    <details style="margin-top:10px">
+      <summary>Q: Can I run multiple Chrome profiles at once?</summary>
+      <p>A: The custom site launcher uses one profile (set in Settings). The guest launcher always opens a guest session. Both can run simultaneously for separation between personal and browsing sessions.</p>
+    </details>
+
+    <details style="margin-top:10px">
+      <summary>Q: What does the ⚿ lock button do exactly?</summary>
+      <p>A: It asks for your password and unlocks <em>all three</em> areas (Vault, Chrome, Settings) in one go — useful so you don't have to authenticate three times separately. Clicking it again when unlocked re-locks everything.</p>
+    </details>
+  </section>
+
+</main>
+
+<footer>
+  <div>Made for <span class="green">MainGUI</span> &nbsp;·&nbsp; Save the <strong>help folder</strong> next to your program EXE and open <code>index.htm</code> from it.</div>
+  <div style="margin-top:6px">Press <span class="kbd">F1</span> inside the program to reopen this page at any time.</div>
+</footer>
+
+<script>
+/* ── Matrix rain ── */
+(function(){
+  const canvas = document.getElementById('matrix-canvas');
+  const ctx = canvas.getContext('2d');
+  const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ';
+  let cols, drops;
+
+  function resize(){
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    cols  = Math.floor(canvas.width / 16);
+    drops = Array.from({length: cols}, () => Math.random() * -50);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function draw(){
+    ctx.fillStyle = 'rgba(7,18,31,0.18)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#00d166';
+    ctx.font = '13px Lucida Console';
+    drops.forEach((y, i) => {
+      const ch = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(ch, i * 16, y * 16);
+      if (y * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i] += 0.5;
+    });
+  }
+  setInterval(draw, 60);
+})();
+
+/* ── Boot animation demo ── */
+(function(){
+  const demo  = document.getElementById('termDemo');
+  const steps = [
+    'Loading assets',
+    'Unpacking modules',
+    'Injecting core',
+    'Authorizing session',
+    'Activating interface',
+    'Optimizing runtime',
+    'Finalizing launch',
+    'Done. Welcome, Operative.'
+  ];
+  let si = 0, li = 0, dotPhase = 0;
+
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+
+  function addLine(text, color){
+    const s = document.createElement('span');
+    s.className = 'terminal-line';
+    s.style.color = color || 'inherit';
+    s.textContent = '> ' + text;
+    demo.appendChild(s);
+    demo.scrollTop = demo.scrollHeight;
+  }
+
+  function nextStep(){
+    if(si >= steps.length){ si = 0; demo.innerHTML = '<span class="terminal-line" style="color:var(--muted)">> SYSTEM BOOT</span>'; }
+    const step = steps[si];
+    if(si === steps.length - 1){
+      addLine(step, 'var(--accent2)');
+      si++;
+      setTimeout(nextStep, 2500);
+      return;
+    }
+    let d = 0;
+    const interval = setInterval(()=>{
+      const last = demo.querySelector('.terminal-line:last-child');
+      const dots = '.'.repeat((d%3)+1);
+      if(last && !last.textContent.startsWith('> Done')){
+        last.textContent = '> ' + step + dots;
+      } else {
+        addLine(step + dots);
+      }
+      d++;
+      if(d >= 9){ clearInterval(interval); si++; setTimeout(nextStep, 300); }
+    }, 250);
+  }
+  setTimeout(nextStep, 800);
+})();
+
+/* ── Lock bar animation ── */
+(function(){
+  let pct = 0;
+  const bar = document.getElementById('lockBar');
+  function tick(){
+    pct = (pct + 1) % 101;
+    bar.style.width = pct + '%';
+    if(pct >= 100) bar.style.background = 'linear-gradient(90deg, #ff4466, #ff6644)';
+    else           bar.style.background = 'linear-gradient(90deg, var(--accent), var(--accent2))';
+    setTimeout(tick, 55);
+  }
+  setTimeout(tick, 1200);
+})();
+
+/* ── Intersection observer: fade in section-cards ── */
+(function(){
+  const cards = document.querySelectorAll('.section-card');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, {threshold: 0.08});
+  cards.forEach(c => io.observe(c));
+})();
+
+/* ── navTo helper ── */
+function navTo(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  window.scrollTo({top: el.getBoundingClientRect().top + window.scrollY - 60, behavior:'smooth'});
+}
+
+/* ── F1 shortcut ── */
+window.addEventListener('keydown', e => {
+  if(e.key === 'F1'){ e.preventDefault(); window.location.href = '#home'; }
+}, {passive:false});
+
+/* ── Lightbox ── */
+function openLightbox(el) {
+  const img = el.querySelector('img');
+  document.getElementById('lightbox-img').src = img.src;
+  document.getElementById('lightbox').classList.add('open');
+}
+document.getElementById('lightbox').addEventListener('click', function(){
+  this.classList.remove('open');
+});
+document.getElementById('lightbox-close').addEventListener('click', function(e){
+  e.stopPropagation();
+  document.getElementById('lightbox').classList.remove('open');
+});
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') document.getElementById('lightbox').classList.remove('open');
+});
+
+window.addEventListener('load', ()=>{
+  if(location.hash){
+    const el = document.getElementById(location.hash.replace('#',''));
+    if(el) setTimeout(()=> window.scrollTo({top: el.getBoundingClientRect().top + window.scrollY - 60, behavior:'smooth'}), 100);
+  }
+});
+</script>
+</body>
+</html>
